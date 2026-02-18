@@ -1,0 +1,40 @@
+{
+  "current": 5000,
+  "target": 12000,
+  "burnMonthly": 3500,
+  "skimPct": 50,
+  "lastIncome": {
+    "date": "2026-02-18",
+    "amt": 0,
+    "source": "manual"
+  },
+  "projectionDays": 45,
+  "updated": "2026-02-18T06:44:00-05:00",
+  "signals": [
+    {
+      "feed": "Tesla",
+      "text": "@elonmusk If you haven't tried FSD v14 yet, you’re literally driving in the past. The jump from v12 ...",
+      "score": "5.12"
+    },
+    {
+      "feed": "Tesla",
+      "text": "Grok + FSD Kept Me From Quitting My Job\n\nI took a sabbatical and then came back to the work force. T...",
+      "score": "3.72"
+    },
+    {
+      "feed": "Solana",
+      "text": "Launching in 30 mins! 🚀 \nIt's time to save $PUI and become a legend. \nDon't miss the moment we make...",
+      "score": "2.08"
+    },
+    {
+      "feed": "Solana",
+      "text": "you open your wallet\n\nyou find out you’re up $300,000 on the memecoin you aped before sleep\n\nyou fin...",
+      "score": "2.06"
+    },
+    {
+      "feed": "AI/xAI",
+      "text": "@_SandyBay_ @mark_k @GoogleDeepMind I don't need to compare it to 4.1. I have to compare it to the c...",
+      "score": "1.06"
+    }
+  ]
+}
