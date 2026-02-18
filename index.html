@@ -32,6 +32,10 @@ h1 { text-align: center; }
   <h3>Cron Health</h3>
   <p id="cron-summary">Loading...</p>
 </div>
+  <div class="metric" id="repo-card">
+    <h3>Repo Status</h3>
+    <p id="repo-summary">Loading...</p>
+  </div>
 <div class="metric" id="queue-card">
   <h3>Queue Depth</h3>
   <p id="queue-summary">Loading...</p>
@@ -66,6 +70,15 @@ async function loadData() {
     const tweetRes = await fetch('tweet_log.json');
     const tweet = await tweetRes.json();
     document.getElementById('tweet-summary').innerHTML = `Last post: ${tweet.lastPost}<br>Failures: ${tweet.failures}<br>Token expires: ${tweet.tokenExpires}`;
+  } catch {}
+  // GitHub Repo Status
+  try {
+    const repoRes = await fetch('https://api.github.com/repos/NanoRisk6/openclaw-dashboard');
+    const repo = await repoRes.json();
+    const prRes = await fetch(repo.pulls_url.replace('{sha}', '?state=open'));
+    const prs = await prRes.json();
+    const openPRs = Array.isArray(prs) ? prs.length : 0;
+    document.getElementById('repo-summary').innerHTML = `Stars: ${repo.stargazers_count || 0}<br>Forks: ${repo.forks_count || 0}<br>Open Issues/PRs: ${repo.open_issues_count || 0}<br>Open PRs: ${openPRs}`;
   } catch {}
 }
 function toggleTweetFilter() {
