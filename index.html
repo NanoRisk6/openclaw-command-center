@@ -1,201 +1,58 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Claw Treasury OS Cockpit</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#10b981">
-  <style>
-    html, body { height: 100vh; margin: 0; overflow: hidden; }
-    .gradient-bg { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
-    .bar-fill { transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
-    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-    .pulse { animation: pulse 2s infinite; }
-    table td { font-size: 0.75rem; padding: 0.25rem 0.5rem; }
-    #signalsTable { max-height: 140px; }
-    canvas { max-height: 160px !important; height: 160px !important; }
-  </style>
-</head>
-<body class="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 text-gray-900 dark:text-gray-100 font-sans antialiased">
-  <div class="h-screen flex flex-col">
-    <header class="flex justify-between items-center p-3 bg-white/90 dark:bg-gray-800/90 backdrop-blur-md border-b border-gray-200 dark:border-gray-700 shadow-sm">
-      <div class="flex items-center gap-2">
-        <div class="text-2xl">🧊</div>
-        <div>
-          <h1 class="text-lg font-black bg-gradient-to-r from-gray-900 to-gray-700 dark:from-emerald-400 dark:to-emerald-600 bg-clip-text text-transparent leading-tight">Claw Treasury OS</h1>
-          <p class="text-xs opacity-75 font-medium">Live Cockpit • No Scroll</p>
-        </div>
-      </div>
-      <button id="darkToggle" class="p-2 rounded-xl bg-white dark:bg-gray-800 shadow-md hover:shadow-lg transition-all">
-        <span class="dark:hidden">🌙</span>
-        <span class="hidden dark:inline">☀️</span>
-      </button>
-    </header>
-
-    <main class="flex-1 p-3 grid grid-cols-1 lg:grid-cols-2 gap-3 overflow-hidden">
-      <!-- Left Column: Core Metrics + Edit -->
-      <div class="flex flex-col gap-3 h-full">
-        <!-- Treasury Status (Tall Card) -->
-        <div class="gradient-bg text-white p-4 rounded-2xl shadow-2xl flex flex-col justify-between flex-1 min-h-0">
-          <h2 class="text-lg font-bold mb-3">💰 Treasury Status</h2>
-          <div class="text-3xl font-black mb-3">$<span id="current">5,000</span>k</div>
-          <div class="text-xl mb-4 opacity-90">Target: $<span id="target">12</span>k</div>
-          <div class="w-full bg-white/30 rounded-xl h-4 mb-4 overflow-hidden">
-            <div id="progressBar" class="bg-white h-4 rounded-xl bar-fill" style="width: 41.67%"></div>
-          </div>
-          <div id="gap" class="text-xl font-bold flex items-center gap-2">
-            <span>45 days @50% skim</span> <span class="text-sm pulse text-yellow-200">⏳</span>
-          </div>
-        </div>
-
-        <!-- Quick Metrics -->
-        <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl p-3 rounded-2xl shadow-xl border border-white/50 grid grid-cols-2 gap-2 text-sm">
-          <div><span class="font-bold block">Burn/mo</span><span id="burn" class="text-lg font-black">$3.5k</span></div>
-          <div><span class="font-bold block">Skim</span><span id="skim" class="text-lg font-black">50%</span></div>
-          <div><span class="font-bold block">Proj Days</span><span id="projDays" class="text-lg font-black">45</span></div>
-          <div><span class="font-bold block">Updated</span><span id="updated" class="text-xs opacity-75">Now</span></div>
-        </div>
-
-        <!-- Sparks Alert -->
-        <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl p-3 rounded-2xl shadow-xl border border-white/50">
-          <h3 class="text-base font-bold mb-2 flex items-center gap-1">⚡ Sparks</h3>
-          <div id="sparksBadge" class="text-lg font-black text-gray-500 bg-gray-200 dark:bg-gray-700 px-3 py-1.5 rounded-xl mb-2 text-center">FALSE</div>
-          <div id="sparksMeta" class="text-xs space-y-1 opacity-90 max-h-12 overflow-hidden"></div>
-        </div>
-
-        <!-- Controls -->
-        <div class="bg-emerald-50 dark:bg-emerald-900/50 p-2 rounded-2xl shadow-md grid grid-cols-2 gap-1">
-          <button id="refreshBtn" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 px-3 rounded-xl shadow-md transition-all text-xs">🔄 Refresh</button>
-          <button id="clearSparksBtn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-3 rounded-xl shadow-md transition-all text-xs">🧹 Clear</button>
-        </div>
-      </div>
-
-      <!-- Right Column: Signals + Charts + Edit -->
-      <div class="flex flex-col gap-3 h-full">
-        <!-- Signals Table (Top 10, Scrollable) -->
-        <div class="flex-1 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-xl border border-white/60 overflow-hidden">
-          <h3 class="text-base font-bold p-3 bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-700 to-gray-600 flex items-center gap-2">📡 Top Signals (Live)</h3>
-          <div class="overflow-auto h-[200px] id="signalsTable">
-            <table class="w-full text-xs">
-              <thead class="sticky top-0 bg-white/70 dark:bg-gray-900/70">
-                <tr><th class="p-2 font-bold text-left">Feed</th><th class="p-2 font-bold text-right">Score</th><th class="p-2 font-bold text-right w-20">Time</th></tr>
-              </thead>
-              <tbody id="signalsTbody"></tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- Dual Charts: Momentum + Projection -->
-        <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl p-3 rounded-2xl shadow-xl border border-white/50 grid grid-cols-2 gap-2 h-28">
-          <div>
-            <h4 class="text-xs font-bold mb-1">📈 Momentum</h4>
-            <canvas id="momentumChart"></canvas>
-          </div>
-          <div>
-            <h4 class="text-xs font-bold mb-1">📉 Projection</h4>
-            <canvas id="projChart"></canvas>
-          </div>
-        </div>
-
-        <!-- Edit Form (Compact) -->
-        <div class="bg-gradient-to-r from-emerald-50 to-blue-50 dark:from-gray-800 dark:to-gray-900 p-2 rounded-2xl shadow-xl border border-emerald-200 dark:border-gray-700 grid grid-cols-2 gap-1 text-xs">
-          <input type="number" id="e-current" value="5000" class="p-2 border border-gray-300 dark:border-gray-600 rounded-xl w-full text-sm focus:ring-2 focus:ring-emerald-400" placeholder="Current $">
-          <input type="number" id="e-target" value="12000" class="p-2 border border-gray-300 dark:border-gray-600 rounded-xl w-full text-sm focus:ring-2 focus:ring-emerald-400" placeholder="Target $">
-          <input type="number" id="e-burn" value="3500" class="p-2 border border-gray-300 dark:border-gray-600 rounded-xl w-full text-sm focus:ring-2 focus:ring-emerald-400" placeholder="Burn/mo">
-          <input type="number" id="e-skim" value="50" class="p-2 border border-gray-300 dark:border-gray-600 rounded-xl w-full text-sm focus:ring-2 focus:ring-emerald-400" placeholder="Skim %">
-          <button id="stateUpdate" class="col-span-2 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-bold py-2 px-4 rounded-xl shadow-md transition-all text-xs">💾 Save State</button>
-        </div>
-      </div>
-    </main>
-  </div>
-
-  <script>
-    const STATE_FILE = './treasury-state.json';
-    const SIGNALS_FILE = './x-signal.ndjson';
-    const MARKET_FILE = './market_state.json';
-    let charts = {}; let signals = []; let state = {}; let marketState = {}; let sparksCache = null;
-    const SPARKS_KEY = 'sparks_cache_v1';
-
-    // Utils
-    function loadSparksCache() { try { sparksCache = JSON.parse(localStorage.getItem(SPARKS_KEY)); } catch { sparksCache = null; } }
-    function saveSparksCache(obj) { localStorage.setItem(SPARKS_KEY, JSON.stringify(obj)); sparksCache = obj; }
-
-    document.getElementById('darkToggle').onclick = () => document.documentElement.classList.toggle('dark');
-
-    async function loadData() {
-      try { state = await (await fetch(STATE_FILE + '?t=' + Date.now())).json(); } catch { state = { treasury_current: 5000, treasury_target: 12000, burnMonthly: 3500, skimPct: 50, updated: new Date().toISOString() }; }
-      try { const text = await (await fetch(SIGNALS_FILE + '?t=' + Date.now())).text(); signals = text.split('\n').filter(Boolean).map(l => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean).slice(-50); } catch { signals = []; }
-      try { marketState = await (await fetch(MARKET_FILE + '?t=' + Date.now())).json(); } catch { marketState = {}; }
-      render();
-    }
-
-    function render() {
-      const gap = state.treasury_target - state.treasury_current;
-      const pct = (state.treasury_current / state.treasury_target * 100).toFixed(0);
-      const projDays = Math.max(1, Math.round(gap / (state.burnMonthly / 30 * state.skimPct / 100)));
-      document.getElementById('current').textContent = (state.treasury_current / 1000).toFixed(0);
-      document.getElementById('target').textContent = (state.treasury_target / 1000).toFixed(0);
-      document.getElementById('gap').innerHTML = `${projDays} days @${state.skimPct}%`;
-      document.getElementById('burn').innerHTML = '$' + (state.burnMonthly / 1000).toFixed(1) + 'k';
-      document.getElementById('skim').textContent = state.skimPct + '%';
-      document.getElementById('projDays').textContent = projDays;
-      document.getElementById('progressBar').style.width = pct + '%';
-      document.getElementById('updated').textContent = new Date(state.updated).toLocaleString('en-US', { timeZone: 'America/New_York' }).slice(0, 16);
-
-      // Sparks
-      const thresh = 1.2;
-      const recent = signals.slice(-12);
-      const high = recent.filter(s => (s.score || 0) >= thresh).sort((a,b) => b.score - a.score)[0];
-      const volHigh = marketState.vol_bucket === 'HIGH';
-      const sparks = !!high || volHigh;
-      const badge = document.getElementById('sparksBadge');
-      badge.textContent = sparks ? 'TRUE' : 'FALSE';
-      badge.className = sparks ? 'text-lg font-black text-amber-600 bg-amber-200 px-3 py-1.5 rounded-xl mb-2 text-center' : 'text-lg font-black text-gray-500 bg-gray-200 dark:bg-gray-700 px-3 py-1.5 rounded-xl mb-2 text-center';
-      const meta = document.getElementById('sparksMeta');
-      let reason = sparks ? (high ? `High Score ${high.score.toFixed(1)} (${high.feed})` : 'Vol HIGH') : 'Quiet';
-      meta.innerHTML = `<div>${reason}</div><div>Signals: ${signals.length || 0} | Market: ${marketState.status || 'OK'}</div>`;
-
-      // Top 10 Signals
-      const top10 = signals.slice(-20).sort((a,b) => (b.score || 0) - (a.score || 0)).slice(0,10);
-      document.getElementById('signalsTbody').innerHTML = top10.map(s => `<tr><td>${s.feed}</td><td class="font-black text-emerald-600">${(s.score||0).toFixed(1)}</td><td>${new Date(s.ts).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}</td></tr>`).join('') || '<tr><td colspan="3" class="p-3 text-center text-gray-500 text-xs">No signals</td></tr>';
-
-      renderCharts();
-    }
-
-    function renderCharts() {
-      // Momentum
-      const ctx1 = document.getElementById('momentumChart').getContext('2d');
-      if (charts.momentum) charts.momentum.destroy();
-      charts.momentum = new Chart(ctx1, { type: 'line', data: { labels: signals.slice(-12).map(s => new Date(s.ts).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})), datasets: [{ data: signals.slice(-12).map(s => s.score || 0), borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.3)', tension: 0.4, fill: true, pointRadius: 3, borderWidth: 2 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, max: 6, ticks: { font: { size: 10 } } }, x: { ticks: { font: { size: 9 } } } }, plugins: { legend: { display: false } } } });
-
-      // Projection (dummy line to target)
-      const ctx2 = document.getElementById('projChart').getContext('2d');
-      if (charts.proj) charts.proj.destroy();
-      const days = 60; const labels = Array.from({length: days/5}, (_,i) => (i*5)+'d');
-      const projData = labels.map((_,i) => state.treasury_current + i*(state.burnMonthly/6 * state.skimPct/100));
-      charts.proj = new Chart(ctx2, { type: 'line', data: { labels, datasets: [{ label: 'Target', data: Array(days/5).fill(state.treasury_target), borderColor: '#ef4444', borderDash: [5,5], pointRadius: 0 }, { data: projData, borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.2)', tension: 0.3, fill: true, pointRadius: 2 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: false, ticks: { font: { size: 10 } } }, x: { ticks: { font: { size: 9 } } } }, plugins: { legend: { display: false } } } });
-    }
-
-    // Events
-    document.getElementById('stateUpdate').onclick = async () => {
-      state.treasury_current = +document.getElementById('e-current').value || state.treasury_current;
-      state.treasury_target = +document.getElementById('e-target').value || state.treasury_target;
-      state.burnMonthly = +document.getElementById('e-burn').value || state.burnMonthly;
-      state.skimPct = +document.getElementById('e-skim').value || state.skimPct;
-      state.updated = new Date().toISOString();
-      await fetch(STATE_FILE, { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(state) });
-      loadData();
-    };
-    document.getElementById('refreshBtn').onclick = loadData;
-    document.getElementById('clearSparksBtn').onclick = () => { localStorage.removeItem(SPARKS_KEY); sparksCache = null; loadData(); };
-
-    loadSparksCache();
-    loadData();
-    setInterval(loadData, 15000);
-  </script>
-</body>
-</html>
+&lt;!DOCTYPE html&gt;
+&lt;html lang="en"&gt;
+&lt;head&gt;
+    &lt;meta charset="UTF-8"&gt;
+    &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+    &lt;title&gt;OpenClaw Cockpit&lt;/title&gt;
+    &lt;script src="https://cdn.jsdelivr.net/npm/chart.js"&gt;&lt;/script&gt;
+    &lt;link rel="stylesheet" href="css/style.css"&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;div id="login-modal" class="modal active"&gt;
+        &lt;div class="modal-content"&gt;
+            &lt;h2&gt;Login to Cockpit&lt;/h2&gt;
+            &lt;form id="login-form"&gt;
+                &lt;input type="text" id="username" placeholder="Username" required&gt;
+                &lt;input type="password" id="password" placeholder="Password" required&gt;
+                &lt;button type="submit"&gt;Login&lt;/button&gt;
+            &lt;/form&gt;
+        &lt;/div&gt;
+    &lt;/div&gt;
+    &lt;div id="dashboard" class="dashboard hidden"&gt;
+        &lt;header&gt;
+            &lt;h1&gt;OpenClaw Cockpit&lt;/h1&gt;
+            &lt;div class="header-controls"&gt;
+                &lt;button id="dark-toggle"&gt;🌙 Dark Mode&lt;/button&gt;
+                &lt;button id="logout"&gt;Logout&lt;/button&gt;
+            &lt;/div&gt;
+        &lt;/header&gt;
+        &lt;main&gt;
+            &lt;div class="grid"&gt;
+                &lt;div class="chart-container"&gt;
+                    &lt;h3&gt;SOL Treasury Progress&lt;/h3&gt;
+                    &lt;canvas id="cpu-chart"&gt;&lt;/canvas&gt;
+                &lt;/div&gt;
+                &lt;div class="chart-container"&gt;
+                    &lt;h3&gt;Cache Hit&lt;/h3&gt;
+                    &lt;canvas id="mem-chart"&gt;&lt;/canvas&gt;
+                &lt;/div&gt;
+                &lt;div class="chart-container"&gt;
+                    &lt;h3&gt;SOL Open Interest&lt;/h3&gt;
+                    &lt;canvas id="disk-chart"&gt;&lt;/canvas&gt;
+                &lt;/div&gt;
+                &lt;div class="chart-container"&gt;
+                    &lt;h3&gt;Derivs Metrics&lt;/h3&gt;
+                    &lt;canvas id="net-chart"&gt;&lt;/canvas&gt;
+                &lt;/div&gt;
+            &lt;/div&gt;
+            &lt;div class="services"&gt;
+                &lt;h3&gt;Services&lt;/h3&gt;
+                &lt;div id="services-list"&gt;
+                    &lt;!-- Services will be populated by JS --&gt;
+                &lt;/div&gt;
+            &lt;/div&gt;
+        &lt;/main&gt;
+    &lt;/div&gt;
+    &lt;script src="js/app.js"&gt;&lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;
