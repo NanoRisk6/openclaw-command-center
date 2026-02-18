@@ -1,1 +1,209 @@
-Updated dashboard with signals table (loads x-signal.ndjson top 5), NanoRisk filter (SOL pumps → Sandbox alert button). Auto-refresh every 60s. Cron-safe.
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Claw Treasury Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#10b981">
+  <style>
+    body { @apply bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors; }
+    .progress { @apply bg-gray-200 dark:bg-gray-700 h-4 rounded-full overflow-hidden; }
+    .bar { @apply h-full bg-gradient-to-r from-emerald-400 to-emerald-600 transition-all duration-300; }
+  </style>
+</head>
+<body class="p-6 max-w-7xl mx-auto">
+  <header class="flex justify-between items-center mb-8">
+    <h1 class="text-3xl font-bold">🧊 Claw Treasury Dashboard</h1>
+    <button id="darkToggle" class="p-2 rounded-lg bg-gray-200 dark:bg-gray-700">🌙</button>
+  </header>
+
+  <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg">
+      <h2 class="text-xl font-semibold mb-2">Treasury</h2>
+      <div class="text-2xl font-bold">$<span id="current">5,000</span> / $<span id="target">12,000</span></div>
+      <div class="progress mt-2">
+        <div id="progressBar" class="bar" style="width: 41.67%"></div>
+      </div>
+      <div id="gap" class="text-sm text-gray-500 mt-1">$7,000 to go (45 days @ 50% skim)</div>
+    </div>
+
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg">
+      <h2 class="text-xl font-semibold mb-2">Burn/mo</h2>
+      <div class="text-2xl font-bold" id="burn">$3,500</div>
+      <div class="text-sm text-gray-500">Skim: <span id="skim">50</span>%</div>
+    </div>
+
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg">
+      <h2 class="text-xl font-semibold mb-2">Last Update</h2>
+      <div id="updated" class="text-lg">2026-02-18 08:37</div>
+      <button id="refreshBtn" class="mt-2 px-4 py-1 bg-emerald-500 text-white rounded-lg text-sm">Refresh</button>
+    </div>
+  </div>
+
+  <div class="grid md:grid-cols-2 gap-6 mb-8">
+    <div>
+      <h2 class="text-2xl font-semibold mb-4">Top Signals <span class="text-sm text-gray-500">(from x-signal.ndjson)</span></h2>
+      <div class="overflow-x-auto">
+        <table id="signalsTable" class="w-full bg-white dark:bg-gray-800 rounded-xl shadow-lg">
+          <thead class="sticky top-0 bg-gray-100 dark:bg-gray-700">
+            <tr>
+              <th class="p-3 text-left cursor-pointer" data-sort="feed">Feed</th>
+              <th class="p-3 text-left cursor-pointer" data-sort="score">Score ↓</th>
+              <th class="p-3 text-left cursor-pointer" data-sort="text">Signal</th>
+              <th class="p-3 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="signalsBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div>
+      <h2 class="text-2xl font-semibold mb-4">Score Trend</h2>
+      <canvas id="scoreChart" height="300"></canvas>
+    </div>
+  </div>
+
+  <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg">
+    <h2 class="text-2xl font-semibold mb-4">Edit State</h2>
+    <form id="editForm" class="grid md:grid-cols-2 gap-4">
+      <label class="block">
+        Current: $<input type="number" id="e-current" value="5000" class="w-full p-2 border rounded-lg dark:bg-gray-700">
+      </label>
+      <label class="block">
+        Target: $<input type="number" id="e-target" value="12000" class="w-full p-2 border rounded-lg dark:bg-gray-700">
+      </label>
+      <label class="block">
+        Burn/mo: $<input type="number" id="e-burn" value="3500" class="w-full p-2 border rounded-lg dark:bg-gray-700">
+      </label>
+      <label class="block">
+        Skim %: <input type="number" id="e-skim" value="50" max="100" class="w-full p-2 border rounded-lg dark:bg-gray-700">
+      </label>
+      <button type="submit" class="col-span-2 bg-emerald-500 text-white p-3 rounded-lg font-semibold">Save State</button>
+    </form>
+  </div>
+
+  <script>
+    const STATE_URL = './treasury-state.json?t=' + Date.now();
+    const SIGNALS_URL = '../x-signal.ndjson?t=' + Date.now();
+    let chart;
+    let signals = [];
+    let sortBy = 'score';
+    let sortDir = -1;
+
+    document.getElementById('darkToggle').onclick = () => document.documentElement.classList.toggle('dark');
+    document.getElementById('refreshBtn').onclick = loadAll;
+
+    document.getElementById('editForm').onsubmit = async (e) => {
+      e.preventDefault();
+      const state = {
+        treasury_current: +document.getElementById('e-current').value,
+        treasury_target: +document.getElementById('e-target').value,
+        burnMonthly: +document.getElementById('e-burn').value,
+        skimPct: +document.getElementById('e-skim').value,
+        updated: new Date().toISOString()
+      };
+      await fetch('./treasury-state.json', {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(state)
+      });
+      loadAll();
+    };
+
+    document.querySelectorAll('[data-sort]').forEach(th => {
+      th.onclick = () => {
+        if (sortBy === th.dataset.sort) sortDir *= -1;
+        else { sortBy = th.dataset.sort; sortDir = -1; }
+        renderSignals();
+      };
+    });
+
+    async function loadSignals() {
+      try {
+        const res = await fetch(SIGNALS_URL + Date.now());
+        const text = await res.text();
+        signals = text.trim().split('\n').filter(Boolean).map(JSON.parse).slice(-50);
+      } catch (e) {
+        signals = [];
+      }
+    }
+
+    async function loadState() {
+      try {
+        const res = await fetch(STATE_URL + Date.now());
+        return await res.json();
+      } catch (e) {
+        return {treasury_current: 5000, treasury_target: 12000, burnMonthly: 3500, skimPct: 50};
+      }
+    }
+
+    function renderSignals(state) {
+      const tbody = document.getElementById('signalsBody');
+      tbody.innerHTML = signals.sort((a,b) => {
+        const valA = a[sortBy] || 0;
+        const valB = b[sortBy] || 0;
+        return (valA > valB ? 1 : -1) * sortDir;
+      }).map((s, i) => `
+        <tr>
+          <td class="p-3 font-medium">${s.feed}</td>
+          <td class="p-3">${s.score.toFixed(2)}</td>
+          <td class="p-3 max-w-md truncate">${s.text}</td>
+          <td class="p-3 text-right">
+            ${s.feed.includes('Solana') && s.score > 1.2 ? '<button onclick="sandboxAlert()" class="bg-orange-500 text-white px-2 py-1 rounded text-xs">Sandbox</button>' : ''}
+          </td>
+        </tr>
+      `).join('') || '<tr><td colspan="4" class="p-8 text-center text-gray-500">No signals</td></tr>';
+
+      const gap = state.treasury_target - state.treasury_current;
+      document.getElementById('current').textContent = state.treasury_current.toLocaleString();
+      document.getElementById('target').textContent = state.treasury_target.toLocaleString();
+      document.getElementById('gap').textContent = gap > 0 ? `$${gap.toLocaleString()} (${Math.round(gap / (state.burnMonthly / 30 * state.skimPct / 100)) } days)` : 'Hit!';
+      document.getElementById('burn').textContent = state.burnMonthly.toLocaleString();
+      document.getElementById('skim').textContent = state.skimPct;
+      document.getElementById('progressBar').style.width = `${Math.min(100, (state.treasury_current / state.treasury_target) * 100)}%`;
+      document.getElementById('updated').textContent = state.updated || new Date().toLocaleString();
+      ['current','target','burn','skim'].forEach(k => document.getElementById('e-' + k).value = state[k] || '');
+    }
+
+    async function renderChart(state) {
+      const ctx = document.getElementById('scoreChart').getContext('2d');
+      if (chart) chart.destroy();
+      chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: signals.map(s => new Date(s.ts).toLocaleTimeString()).slice(-20),
+          datasets: [{
+            label: 'Top Score',
+            data: signals.map(s => s.score).slice(-20),
+            borderColor: '#10b981',
+            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+            tension: 0.4
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: { y: { beginAtZero: true } }
+        }
+      });
+    }
+
+    async function loadAll() {
+      const state = await loadState();
+      await loadSignals();
+      renderSignals(state);
+      renderChart(state);
+    }
+
+    loadAll();
+    setInterval(loadAll, 30000); // 30s
+
+    window.sandboxAlert = () => {
+      fetch('../sandbox_expt_tick.mjs', {method: 'POST'}).then(() => alert('Sandbox alert sent!'));
+    };
+  </script>
+</body>
+</html>
