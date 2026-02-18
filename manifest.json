@@ -1,8 +1,0 @@
-{
-  "name": "Claw Treasury Dashboard",
-  "short_name": "Treasury",
-  "start_url": "/",
-  "display": "standalone",
-  "background_color": "#f8f9fa",
-  "theme_color": "#10b981"
-}

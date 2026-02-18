@@ -1,0 +1,5 @@
+{
+  "open_interest": {"SOL": {"oi_value": 2500000}},
+  "perp_funding": {"SOL": {"rate": 0.0001}},
+  "deltas": {"SOL": {"oi_change_pct": 2.5}}
+}

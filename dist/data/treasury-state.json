@@ -1,0 +1,11 @@
+{
+  "treasury_current": 58000,
+  "treasury_target": 2000000,
+  "burnMonthly": 450000,
+  "skimPct": 75,
+  "projectionDays": 28,
+  "sessions_active": 1274,
+  "memory_chunks": 8,
+  "cache_hit": "65%",
+  "updated": "2026-02-18T21:39:00Z"
+}

@@ -1,0 +1,8 @@
+{
+  "subsystems": [
+    {"id": "gateway", "label": "Gateway", "ok": true, "stale": false},
+    {"id": "ledger", "label": "Ledger", "ok": true, "stale": false},
+    {"id": "metrics", "label": "Metrics", "ok": true, "stale": false},
+    {"id": "signals", "label": "Signals", "ok": false, "stale": true}
+  ]
+}

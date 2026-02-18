@@ -1,0 +1,10 @@
+{
+  "vol_bucket": "MEDIUM",
+  "liq": "high",
+  "structure": "stable",
+  "gateway_pid": 693,
+  "gateway_latency_ms": 15,
+  "channels_ok": 2,
+  "security_critical": 2,
+  "updated_at": "2026-02-18T21:39:00Z"
+}
