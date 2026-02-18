@@ -1,294 +1,94 @@
-&lt;!DOCTYPE html&gt;
-&lt;html lang=&quot;en&quot;&gt;
-&lt;head&gt;
-  &lt;meta charset=&quot;UTF-8&quot;&gt;
-  &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot;&gt;
-  &lt;title&gt;OpenClaw Treasury Cockpit&lt;/title&gt;
-  &lt;style&gt;
-    :root {
-      --bg: #f8fafc;
-      --fg: #0f172a;
-      --card: #ffffff;
-      --accent: #3b82f6;
-      --green: #10b981;
-      --red: #ef4444;
-      --yellow: #f59e0b;
-      --border: #e2e8f0;
-      --shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-    [data-theme=&quot;dark&quot;] {
-      --bg: #0f172a;
-      --fg: #f1f5f9;
-      --card: #1e293b;
-      --accent: #60a5fa;
-      --green: #34d399;
-      --red: #f87171;
-      --yellow: #fbbf24;
-      --border: #334155;
-      --shadow: 0 2px 8px rgba(0,0,0,0.3);
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: system-ui,-apple-system,sans-serif; background: var(--bg); color: var(--fg); line-height: 1.5; }
-    .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-    .modal-content { background: var(--card); padding: 2rem; border-radius: 12px; box-shadow: var(--shadow); max-width: 400px; width: 90%; }
-    .modal.inactive { display: none; }
-    input { width: 100%; padding: 0.75rem; margin-bottom: 1rem; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); }
-    button { width: 100%; padding: 0.75rem; background: var(--accent); color: white; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; }
-    button:hover { opacity: 0.9; }
-    .dashboard { padding: 1rem; max-width: 1400px; margin: 0 auto; }
-    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
-    h1 { font-size: 1.8rem; }
-    .header-controls { display: flex; gap: 0.5rem; }
-    .header-controls button { padding: 0.5rem 1rem; font-size: 0.9rem; min-width: 80px; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
-    @media (max-width: 768px) { .grid { grid-template-columns: 1fr; } }
-    .card { background: var(--card); padding: 1.5rem; border-radius: 12px; box-shadow: var(--shadow); border: 1px solid var(--border); }
-    canvas { width: 100%; height: 200px; }
-    .services { margin-top: 2rem; }
-    .service { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid var(--border); }
-    .service:last-child { border-bottom: none; }
-    .status-ok { color: var(--green); }
-    .status-warn { color: var(--yellow); }
-    .status-err { color: var(--red); }
-    #tweet-btn { background: #1da1f2; }
-    .animate { animation: pulse 10s ease-out; }
-    @keyframes pulse { 0% { opacity: 0; transform: scale(0.95); } 100% { opacity: 1; transform: scale(1); } }
-  &lt;/style&gt;
-&lt;/head&gt;
-&lt;body&gt;
-  &lt;div id=&quot;login-modal&quot; class=&quot;modal&quot;&gt;
-    &lt;div class=&quot;modal-content&quot;&gt;
-      &lt;h2&gt;Enter Cockpit&lt;/h2&gt;
-      &lt;form id=&quot;login-form&quot;&gt;
-        &lt;input type=&quot;text&quot; id=&quot;username&quot; placeholder=&quot;Any username&quot; required&gt;
-        &lt;input type=&quot;password&quot; id=&quot;password&quot; placeholder=&quot;Any password&quot; required&gt;
-        &lt;button type=&quot;submit&quot;&gt;Login&lt;/button&gt;
-      &lt;/form&gt;
-    &lt;/div&gt;
-  &lt;/div&gt;
-  &lt;div id=&quot;dashboard&quot; class=&quot;dashboard&quot; style=&quot;display:none;&quot;&gt;
-    &lt;header&gt;
-      &lt;h1&gt;🛑 Treasury Cockpit&lt;/h1&gt;
-      &lt;div class=&quot;header-controls&quot;&gt;
-        &lt;button id=&quot;dark-toggle&quot;&gt;🌙&lt;/button&gt;
-        &lt;button id=&quot;tweet-btn&quot;&gt;📱 Tweet&lt;/button&gt;
-        &lt;button id=&quot;logout&quot;&gt;↩️&lt;/button&gt;
-      &lt;/div&gt;
-    &lt;/header&gt;
-    &lt;div class=&quot;grid&quot;&gt;
-      &lt;div class=&quot;card&quot;&gt;
-        &lt;h3&gt;SOL Price Radar&lt;/h3&gt;
-        &lt;canvas id=&quot;sol-gauge&quot;&gt;&lt;/canvas&gt;
-        &lt;p id=&quot;sol-price&quot;&gt;$86.43&lt;/p&gt;
-      &lt;/div&gt;
-      &lt;div class=&quot;card&quot;&gt;
-        &lt;h3&gt;Pipeline Health&lt;/h3&gt;
-        &lt;canvas id=&quot;pipeline-gauge&quot;&gt;&lt;/canvas&gt;
-        &lt;p id=&quot;pipeline-status&quot;&gt;&lt;/p&gt;
-      &lt;/div&gt;
-      &lt;div class=&quot;card&quot;&gt;
-        &lt;h3&gt;CPU / Mem&lt;/h3&gt;
-        &lt;canvas id=&quot;cpu-gauge&quot;&gt;&lt;/canvas&gt;
-        &lt;p id=&quot;cpu-mem&quot;&gt;&lt;/p&gt;
-      &lt;/div&gt;
-      &lt;div class=&quot;card&quot;&gt;
-        &lt;h3&gt;Disk / Net&lt;/h3&gt;
-        &lt;canvas id=&quot;disk-gauge&quot;&gt;&lt;/canvas&gt;
-        &lt;p id=&quot;disk-net&quot;&gt;&lt;/p&gt;
-      &lt;/div&gt;
-      &lt;div class=&quot;card full-span&quot;&gt;
-        &lt;h3&gt;Market State Radar&lt;/h3&gt;
-        &lt;canvas id=&quot;market-radar&quot;&gt;&lt;/canvas&gt;
-      &lt;/div&gt;
-    &lt;/div&gt;
-    &lt;div class=&quot;services card&quot;&gt;
-      &lt;h3&gt;Services Status&lt;/h3&gt;
-      &lt;div id=&quot;services-list&quot;&gt;&lt;/div&gt;
-    &lt;/div&gt;
-  &lt;/div&gt;
-  &lt;script&gt;
-    // Data snapshots (fallback)
-    const snapshots = {
-      sol: { usd: 86.43 },
-      pipeline: {
-        ok: false,
-        subsystems: [
-          {id: &quot;steward&quot;, ok: true, msg: &quot;OK&quot;},
-          {id: &quot;world_events&quot;, ok: false, msg: &quot;STALE&quot;},
-          // ... abbreviated, will load full
-        ]
-      },
-      market: { volatility: {bucket: &quot;HIGH&quot;}, liquidity: {liquidity: &quot;THIN&quot;} },
-      system: { cpu: 17, mem: 6, disk: 6, net: 12 }
-    };
-
-    let data = { ...snapshots };
-    let theme = localStorage.getItem(&#x27;theme&#x27;) || &#x27;light&#x27;;
-    document.documentElement.setAttribute(&#x27;data-theme&#x27;, theme);
-
-    // Gauges function
-    function drawGauge(ctx, centerX, centerY, radius, value, max, color) {
-      ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-      const start = -Math.PI / 2;
-      const end = start + (value / max) * Math.PI * 2;
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, radius * 0.8, start, end);
-      ctx.lineWidth = 20;
-      ctx.strokeStyle = color;
-      ctx.stroke();
-      ctx.fillStyle = &#x27;#333&#x27;;
-      ctx.font = &#x27;bold 24px sans-serif&#x27;;
-      ctx.textAlign = &#x27;center&#x27;;
-      ctx.fillText(`${Math.round(value)}%`, centerX, centerY + 8);
-    }
-
-    function drawRadar(ctx, centerX, centerY, radius, labels, values, colors) {
-      ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-      const n = labels.length;
-      const angle = (Math.PI * 2) / n;
-      // Axes
-      ctx.strokeStyle = &#x27;#ccc&#x27;;
-      ctx.lineWidth = 1;
-      for (let i = 0; i &lt; n; i++) {
-        ctx.beginPath();
-        ctx.moveTo(centerX, centerY);
-        ctx.lineTo(centerX + Math.cos(angle * i - Math.PI/2) * radius, centerY + Math.sin(angle * i - Math.PI/2) * radius);
-        ctx.stroke();
-      }
-      // Data
-      ctx.lineWidth = 3;
-      ctx.strokeStyle = &#x27;var(--accent)&#x27;;
-      ctx.beginPath();
-      for (let i = 0; i &lt;= n; i++) {
-        const idx = i % n;
-        const v = values[idx] / 100 * radius;
-        const x = centerX + Math.cos(angle * idx - Math.PI/2) * v;
-        const y = centerY + Math.sin(angle * idx - Math.PI/2) * v;
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      }
-      ctx.closePath();
-      ctx.stroke();
-      ctx.fillStyle = &#x27;var(--accent)&#x27;;
-      ctx.globalAlpha = 0.2;
-      ctx.fill();
-      ctx.globalAlpha = 1;
-      // Labels
-      ctx.fillStyle = &#x27;var(--fg)&#x27;;
-      ctx.font = &#x27;12px sans-serif&#x27;;
-      ctx.textAlign = &#x27;center&#x27;;
-      ctx.textBaseline = &#x27;middle&#x27;;
-      for (let i = 0; i &lt; n; i++) {
-        const x = centerX + Math.cos(angle * i - Math.PI/2) * (radius + 20);
-        const y = centerY + Math.sin(angle * i - Math.PI/2) * (radius + 20);
-        ctx.fillText(labels[i], x, y);
-      }
-    }
-
-    function animateGauge(canvasId, targetValue, duration = 10000) {
-      const canvas = document.getElementById(canvasId);
-      const ctx = canvas.getContext(&#x27;2d&#x27;);
-      canvas.width = canvas.offsetWidth;
-      canvas.height = canvas.offsetHeight;
-      const centerX = canvas.width / 2;
-      const centerY = canvas.height / 2;
-      const radius = Math.min(centerX, centerY) - 30;
-      let start = 0;
-      const startTime = performance.now();
-      function anim(t) {
-        const progress = Math.min((t - startTime) / duration, 1);
-        const curr = start + (targetValue - start) * progress;
-        drawGauge(ctx, centerX, centerY, radius, curr, 100, &#x27;var(--accent)&#x27;);
-        if (progress &lt; 1) requestAnimationFrame(anim);
-      }
-      requestAnimationFrame(anim);
-    }
-
-    // Update data
-    async function updateData() {
-      try {
-        const [pipe, mkt, sol] = await Promise.all([
-          fetch(&#x27;../pipeline_status.json&#x27;).then(r =&gt; r.json()),
-          fetch(&#x27;../market_state.json&#x27;).then(r =&gt; r.json()),
-          fetch(&#x27;../sol_current.json&#x27;).then(r =&gt; r.json())
-        ]);
-        data.pipeline = pipe;
-        data.market = mkt;
-        data.sol = sol;
-      } catch (e) {
-        console.log(&#x27;Fetch fallback to snapshot&#x27;);
-      }
-      render();
-    }
-
-    function render() {
-      // SOL
-      document.getElementById(&#x27;sol-price&#x27;).textContent = `$${data.sol.usd?.toFixed(2) || snapshots.sol.usd}`;
-      animateGauge(&#x27;sol-gauge&#x27;, 75, 5000); // mock high for SOL strength
-
-      // Pipeline
-      const okCount = data.pipeline.subsystems?.filter(s =&gt; s.ok).length || 0;
-      const total = data.pipeline.subsystems?.length || 11;
-      document.getElementById(&#x27;pipeline-status&#x27;).textContent = `${okCount}/${total} OK`;
-      const pct = (okCount / total) * 100;
-      animateGauge(&#x27;pipeline-gauge&#x27;, pct, 5000);
-
-      // System mocks
-      document.getElementById(&#x27;cpu-mem&#x27;).textContent = &#x60;CPU 17% | Mem 6%&#x60;;
-      animateGauge(&#x27;cpu-gauge&#x27;, 17, 5000);
-      document.getElementById(&#x27;disk-net&#x27;).textContent = &#x60;Disk 6% | Net 12MB&#x60;;
-      animateGauge(&#x27;disk-gauge&#x27;, 6, 5000);
-
-      // Market radar
-      const radarCtx = document.getElementById(&#x27;market-radar&#x27;).getContext(&#x27;2d&#x27;);
-      const labels = [&#x27;Vol&#x27;, &#x27;Liq&#x27;, &#x27;Struct&#x27;];
-      const values = [80, 50, 70]; // mock from market
-      const centerX = 200;
-      const centerY = 150;
-      const radius = 120;
-      drawRadar(radarCtx, centerX, centerY, radius, labels, values, []);
-      document.getElementById(&#x27;market-radar&#x27;).width = 400;
-      document.getElementById(&#x27;market-radar&#x27;).height = 300;
-
-      // Services
-      const list = document.getElementById(&#x27;services-list&#x27;);
-      list.innerHTML = &#x27;&#x27;;
-      (data.pipeline.subsystems || []).forEach(s =&gt; {
-        const div = document.createElement(&#x27;div&#x27;);
-        div.className = &#x60;service status-${s.ok ? &#x27;ok&#x27; : &#x27;err&#x27;}&#x60;;
-        div.innerHTML = `&lt;span&gt;${s.label || s.id}&lt;/span&gt;&lt;span&gt;${s.msg}&lt;/span&gt;`;
-        list.appendChild(div);
-      });
-    }
-
-    // Events
-    document.getElementById(&#x27;login-form&#x27;).addEventListener(&#x27;submit&#x27;, e =&gt; {
-      e.preventDefault();
-      document.getElementById(&#x27;login-modal&#x27;).classList.add(&#x27;inactive&#x27;);
-      document.getElementById(&#x27;dashboard&#x27;).style.display = &#x27;block&#x27;;
-      document.body.classList.add(&#x27;animate&#x27;);
-      updateData();
-    });
-
-    document.getElementById(&#x27;dark-toggle&#x27;).onclick = () =&gt; {
-      theme = theme === &#x27;dark&#x27; ? &#x27;light&#x27; : &#x27;dark&#x27;;
-      localStorage.setItem(&#x27;theme&#x27;, theme);
-      document.documentElement.setAttribute(&#x27;data-theme&#x27;, theme);
-    };
-
-    document.getElementById(&#x27;tweet-btn&#x27;).onclick = () =&gt; {
-      const metrics = `SOL $${data.sol.usd}, Pipeline ${okCount}/${total}, CPU 17%, Market HIGH vol THIN liq #OpenClawCockpit`;
-      window.open(&#x60;https://twitter.com/intent/tweet?text=${encodeURIComponent(metrics)}&#x60;, &#x27;_blank&#x27;);
-    };
-
-    document.getElementById(&#x27;logout&#x27;).onclick = () =&gt; {
-      document.getElementById(&#x27;dashboard&#x27;).style.display = &#x27;none&#x27;;
-      document.getElementById(&#x27;login-modal&#x27;).classList.remove(&#x27;inactive&#x27;);
-    };
-
-    // Poll update every 30s
-    setInterval(updateData, 30000);
-    updateData();
-  &lt;/script&gt;
-&lt;/body&gt;
-&lt;/html&gt;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenClaw Cockpit</title>
+<style>
+:root { --bg: white; --fg: black; --card: #f0f0f0; --accent: #1da1f2; }
+[data-theme="dark"] { --bg: #121212; --fg: white; --card: #1e1e1e; --accent: #1da1f2; }
+body { font-family: system-ui; background: var(--bg); color: var(--fg); margin: 0; padding: 1rem; max-width: 600px; margin: auto; }
+h1 { text-align: center; }
+.metric { background: var(--card); padding: 1rem; margin: 1rem 0; border-radius: 8px; display: grid; gap: 0.5rem; }
+.metric h3 { margin: 0; font-size: 1.2rem; }
+#tweet-filter { margin-left: 0.5rem; }
+.btn { background: var(--accent); color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; font-size: 1rem; }
+.btn:hover { opacity: 0.9; }
+#tweet-text { width: 100%; margin: 1rem 0; padding: 0.5rem; }
+.hidden { display: none; }
+</style>
+</head>
+<body>
+<h1>OpenClaw Cockpit</h1>
+<div id="login" style="text-align: center;">
+<input id="pass" type="password" placeholder="Password (openclaw)">
+<button onclick="login()">Login</button>
+</div>
+<div id="dashboard" class="hidden">
+<div class="metric"><h2>SOL: $86.43</h2></div>
+<div class="metric"><h2>Pipeline: 6 / 11 OK</h2></div>
+<div class="metric"><h2>Treasury: 42% to Target</h2></div>
+<div class="metric" id="cron-card">
+  <h3>Cron Health</h3>
+  <p id="cron-summary">Loading...</p>
+</div>
+<div class="metric" id="queue-card">
+  <h3>Queue Depth</h3>
+  <p id="queue-summary">Loading...</p>
+  <label><input type="checkbox" id="tweet-filter"> Tweet* only</label>
+</div>
+<div class="metric" id="tweet-card">
+  <h3>Tweet Log</h3>
+  <p id="tweet-summary">Loading...</p>
+</div>
+<textarea id="tweet-text">SOL $86.43 | Pipeline 6/11 OK | Treasury 42% #SOL #OpenClaw</textarea>
+<button onclick="tweet()" class="btn">Tweet Snapshot</button>
+<button onclick="toggleDark()" class="btn">🌙 Dark Mode</button>
+<button onclick="refreshData()" class="btn" id="refresh-btn">🔄 Refresh</button>
+</div>
+<script>
+const pass = "openclaw";
+let tweetFilter = false;
+async function loadData() {
+  try {
+    const cronRes = await fetch('cron_health.json');
+    const cron = await cronRes.json();
+    document.getElementById('cron-summary').innerHTML = `${cron.ok}/${cron.total} OK <span style="color:red;">(${cron.errors.length} errors)</span><br>Errors: ${cron.errors.join(', ') || 'none'}`;
+  } catch {}
+  try {
+    const queueRes = await fetch('queue_depth.json');
+    const queue = await queueRes.json();
+    const active = tweetFilter ? queue.tweetActive : queue.active60min;
+    const label = tweetFilter ? 'Tweet*' : 'Active 60m';
+    document.getElementById('queue-summary').innerHTML = `Total: ${queue.total}<br>${label}: ${active}<br>Last dequeue: ${queue.lastDequeue}`;
+  } catch {}
+  try {
+    const tweetRes = await fetch('tweet_log.json');
+    const tweet = await tweetRes.json();
+    document.getElementById('tweet-summary').innerHTML = `Last post: ${tweet.lastPost}<br>Failures: ${tweet.failures}<br>Token expires: ${tweet.tokenExpires}`;
+  } catch {}
+}
+function toggleTweetFilter() {
+  tweetFilter = !tweetFilter;
+  loadData();
+}
+document.getElementById('tweet-filter').addEventListener('change', toggleTweetFilter);
+async function refreshData() {
+  document.getElementById('refresh-btn').textContent = '⏳';
+  await loadData();
+  document.getElementById('refresh-btn').textContent = '🔄 Refresh';
+}
+setInterval(loadData, 10000);
+loadData();
+function login() { if (document.getElementById("pass").value === pass) { document.getElementById("login").classList.add("hidden"); document.getElementById("dashboard").classList.remove("hidden"); const theme = localStorage.getItem("theme") || "light"; document.body.dataset.theme = theme; document.querySelector("button:last-of-type").textContent = theme === "dark" ? "☀️ Light Mode" : "🌙 Dark Mode"; loadData(); } }
+function toggleDark() { const isDark = document.body.dataset.theme === "dark"; document.body.dataset.theme = isDark ? "light" : "dark"; localStorage.setItem("theme", document.body.dataset.theme); document.querySelector("#refresh-btn ~ button:last-of-type, button:nth-last-of-type(2)").textContent = document.body.dataset.theme === "dark" ? "☀️ Light Mode" : "🌙 Dark Mode"; }
+function tweet() { const text = document.getElementById("tweet-text").value; window.open("https://twitter.com/intent/tweet?text=" + encodeURIComponent(text)); }
+</script>
+<script>
+const pass = "openclaw";
+function login() { if (document.getElementById("pass").value === pass) { document.getElementById("login").classList.add("hidden"); document.getElementById("dashboard").classList.remove("hidden"); const theme = localStorage.getItem("theme") || "light"; document.body.dataset.theme = theme; document.querySelector("button:last-of-type").textContent = theme === "dark" ? "☀️ Light Mode" : "🌙 Dark Mode"; } }
+function toggleDark() { const isDark = document.body.dataset.theme === "dark"; document.body.dataset.theme = isDark ? "light" : "dark"; localStorage.setItem("theme", document.body.dataset.theme); document.querySelector("button:last-of-type").textContent = document.body.dataset.theme === "dark" ? "☀️ Light Mode" : "🌙 Dark Mode"; }
+function tweet() { const text = document.getElementById("tweet-text").value; window.open("https://twitter.com/intent/tweet?text=" + encodeURIComponent(text)); }
+</script>
+</body>
+</html>
