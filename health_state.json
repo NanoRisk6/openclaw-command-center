@@ -1,0 +1,20 @@
+{
+  "gateway_rtt_ms": 15,
+  "heartbeat_age_s": 1800,
+  "queue_depth": 0,
+  "error_rate_pct": 0.5,
+  "last_error": "429 quota",
+  "sessions_active": 1274,
+  "session_churn": 10,
+  "tokens_used_pct": 3,
+  "token_velocity_min": 1200,
+  "cron_health": "success",
+  "cron_fail_streak": 0,
+  "cron_last_ts": "2026-02-18T21:39:00Z",
+  "safety_crit": 2,
+  "safety_warn": 0,
+  "safety_top_reason": "Discord groupPolicy=open",
+  "sparks": true,
+  "health_last_updated": "2026-02-18T21:43:00Z",
+  "overall": "DEGRADED"
+}

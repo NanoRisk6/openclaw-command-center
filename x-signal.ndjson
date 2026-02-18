@@ -13,3 +13,9 @@
 {"ts":"2026-02-18T13:26:39.465Z","feed":"Solana","text":"Launching in 30 mins! 🚀 \nIt's time to save $PUI and become a legend. \nDon't miss the moment we make history together!\n#Solana #PUI #SavingPUI #Memecoin #Pumpfun https://t.co/lxY1WiCb3A...","score":"2.08","id":"2024112763094863960"}
 {"ts":"2026-02-18T13:26:39.466Z","feed":"Solana","text":"you open your wallet\n\nyou find out you’re up $300,000 on the memecoin you aped before sleep\n\nyou find out solana pumped to $1000\n\nyou went from broke to rich overnight\n\nyour parents are in tears\n\nyou ...","score":"2.06","id":"2024112868040294697"}
 {"ts":"2026-02-18T13:26:39.467Z","feed":"AI/xAI","text":"@_SandyBay_ @mark_k @GoogleDeepMind I don't need to compare it to 4.1. I have to compare it to the competition right now, and every Chinese model has better front-end skills than Grok 4.2. (GLM5, Kimi...","score":"1.06","id":"2024113082209829157"}
+{"ts":"2026-02-18T21:39:00Z","feed":"OpenClaw Security","text":"CRITICAL: Discord groupPolicy=open + elevated tools","score":2.5,"id":"sec-crit-1"}
+{"ts":"2026-02-18T21:39:00Z","feed":"OpenClaw Quota","text":"Embeddings quota hit (429); memory search disabled","score":1.8,"id":"quota-429"}
+{"ts":"2026-02-18T21:39:00Z","feed":"Gateway Health","text":"Loopback OK (15ms), pid 693 active","score":0.9,"id":"gw-health"}
+{\"ts\":\"2026-02-18T21:39:00Z\",\"feed\":\"OpenClaw\",\"text\":\"Tokens 58k/2M (3%) | Sessions 1274\",\"score\":1.2,\"id\":\"live-tokens\"}
+{\"ts\":\"2026-02-18T21:39:00Z\",\"feed\":\"Security\",\"text\":\"2 CRITICAL: Discord open policy\",\"score\":2.5,\"id\":\"sec-crit\"}
+{\"ts\":\"2026-02-18T21:39:00Z\",\"feed\":\"Gateway\",\"text\":\"Loopback 15ms OK pid 693\",\"score\":0.8,\"id\":\"gw-ok\"}
