@@ -23,10 +23,6 @@ h1 { text-align: center; }
 </head>
 <body>
 <h1>OpenClaw Command Center</h1>
-<div id="login" style="text-align: center;">
-<input id="pass" type="password" placeholder="Password (openclaw)">
-<button onclick="login()">Login</button>
-</div>
 <div id="dashboard">
 <div class="metric"><h2>SOL: $86.43</h2></div>
 <div class="metric"><h2>Pipeline: 6 / 11 OK</h2></div>
@@ -54,7 +50,6 @@ h1 { text-align: center; }
 <button onclick="refreshData()" class="btn" id="refresh-btn">🔄 Refresh</button>
 </div>
 <script>
-const pass = "openclaw";
 let tweetFilter = false;
 async function loadData() {
   try {
@@ -102,12 +97,6 @@ const darkBtn = document.querySelector("button:nth-last-of-type(2)");
 if (darkBtn) darkBtn.textContent = theme === "dark" ? "☀️ Light Mode" : "🌙 Dark Mode";
 loadData();
 function toggleDark() { const isDark = document.body.dataset.theme === "dark"; document.body.dataset.theme = isDark ? "light" : "dark"; localStorage.setItem("theme", document.body.dataset.theme); document.querySelector("#refresh-btn ~ button:last-of-type, button:nth-last-of-type(2)").textContent = document.body.dataset.theme === "dark" ? "☀️ Light Mode" : "🌙 Dark Mode"; }
-function tweet() { const text = document.getElementById("tweet-text").value; window.open("https://twitter.com/intent/tweet?text=" + encodeURIComponent(text)); }
-</script>
-<script>
-const pass = "openclaw";
-function login() { if (document.getElementById("pass").value === pass) { document.getElementById("login").classList.add("hidden"); document.getElementById("dashboard").classList.remove("hidden"); const theme = localStorage.getItem("theme") || "light"; document.body.dataset.theme = theme; document.querySelector("#refresh-btn ~ button:last-of-type, button:nth-last-of-type(2)").textContent = theme === "dark" ? "☀️ Light Mode" : "🌙 Dark Mode"; } }
-function toggleDark() { const isDark = document.body.dataset.theme === "dark"; document.body.dataset.theme = isDark ? "light" : "dark"; localStorage.setItem("theme", document.body.dataset.theme); document.querySelector("button:last-of-type").textContent = document.body.dataset.theme === "dark" ? "☀️ Light Mode" : "🌙 Dark Mode"; }
 function tweet() { const text = document.getElementById("tweet-text").value; window.open("https://twitter.com/intent/tweet?text=" + encodeURIComponent(text)); }
 </script>
 </body>
