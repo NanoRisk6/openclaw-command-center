@@ -1,3 +1,6 @@
+---
+layout: default
+---
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -24,7 +27,7 @@ h1 { text-align: center; }
 <input id="pass" type="password" placeholder="Password (openclaw)">
 <button onclick="login()">Login</button>
 </div>
-<div id="dashboard" class="hidden">
+<div id="dashboard">
 <div class="metric"><h2>SOL: $86.43</h2></div>
 <div class="metric"><h2>Pipeline: 6 / 11 OK</h2></div>
 <div class="metric"><h2>Treasury: 42% to Target</h2></div>
@@ -73,7 +76,7 @@ async function loadData() {
   } catch {}
   // GitHub Repo Status
   try {
-    const repoRes = await fetch('https://api.github.com/repos/NanoRisk6/openclaw-dashboard');
+    const repoRes = await fetch('https://api.github.com/repos/NanoRisk6/openclaw-command-center');
     const repo = await repoRes.json();
     const prRes = await fetch(repo.pulls_url.replace('{sha}', '?state=open'));
     const prs = await prRes.json();
@@ -92,14 +95,18 @@ async function refreshData() {
   document.getElementById('refresh-btn').textContent = '🔄 Refresh';
 }
 setInterval(loadData, 10000);
+// Init theme
+const theme = localStorage.getItem("theme") || "light";
+document.body.dataset.theme = theme;
+const darkBtn = document.querySelector("button:nth-last-of-type(2)");
+if (darkBtn) darkBtn.textContent = theme === "dark" ? "☀️ Light Mode" : "🌙 Dark Mode";
 loadData();
-function login() { if (document.getElementById("pass").value === pass) { document.getElementById("login").classList.add("hidden"); document.getElementById("dashboard").classList.remove("hidden"); const theme = localStorage.getItem("theme") || "light"; document.body.dataset.theme = theme; document.querySelector("button:last-of-type").textContent = theme === "dark" ? "☀️ Light Mode" : "🌙 Dark Mode"; loadData(); } }
 function toggleDark() { const isDark = document.body.dataset.theme === "dark"; document.body.dataset.theme = isDark ? "light" : "dark"; localStorage.setItem("theme", document.body.dataset.theme); document.querySelector("#refresh-btn ~ button:last-of-type, button:nth-last-of-type(2)").textContent = document.body.dataset.theme === "dark" ? "☀️ Light Mode" : "🌙 Dark Mode"; }
 function tweet() { const text = document.getElementById("tweet-text").value; window.open("https://twitter.com/intent/tweet?text=" + encodeURIComponent(text)); }
 </script>
 <script>
 const pass = "openclaw";
-function login() { if (document.getElementById("pass").value === pass) { document.getElementById("login").classList.add("hidden"); document.getElementById("dashboard").classList.remove("hidden"); const theme = localStorage.getItem("theme") || "light"; document.body.dataset.theme = theme; document.querySelector("button:last-of-type").textContent = theme === "dark" ? "☀️ Light Mode" : "🌙 Dark Mode"; } }
+function login() { if (document.getElementById("pass").value === pass) { document.getElementById("login").classList.add("hidden"); document.getElementById("dashboard").classList.remove("hidden"); const theme = localStorage.getItem("theme") || "light"; document.body.dataset.theme = theme; document.querySelector("#refresh-btn ~ button:last-of-type, button:nth-last-of-type(2)").textContent = theme === "dark" ? "☀️ Light Mode" : "🌙 Dark Mode"; } }
 function toggleDark() { const isDark = document.body.dataset.theme === "dark"; document.body.dataset.theme = isDark ? "light" : "dark"; localStorage.setItem("theme", document.body.dataset.theme); document.querySelector("button:last-of-type").textContent = document.body.dataset.theme === "dark" ? "☀️ Light Mode" : "🌙 Dark Mode"; }
 function tweet() { const text = document.getElementById("tweet-text").value; window.open("https://twitter.com/intent/tweet?text=" + encodeURIComponent(text)); }
 </script>
